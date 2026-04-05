@@ -8,13 +8,15 @@
     <style>
         body { background-color: #0f1115; color: #e2e8f0; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); border: 1px solid rgba(0, 255, 255, 0.5); }
         .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="antialiased font-sans">
+
     <div class="min-h-screen flex flex-col p-6 lg:p-12">
         <header class="flex justify-between items-center mb-12">
-            <h1 class="text-2xl font-bold tracking-tighter metallic-text uppercase">OmniTalk</h1>
+            <h1 class="text-2xl font-bold tracking-tighter metallic-text uppercase">OMNITALK</h1>
             <div class="flex items-center gap-4">
                 <span class="text-sm text-slate-400">Cristian Lima</span>
                 <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 border border-slate-600"></div>
@@ -22,55 +24,97 @@
         </header>
 
         <main class="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+            
             <div class="glass p-6 rounded-2xl md:col-span-1">
                 <p class="text-xs uppercase tracking-widest text-slate-500 mb-2">Créditos Disponíveis</p>
-                <h2 id="saldo-display" class="text-4xl font-light text-white">-- <span class="text-lg text-slate-500 ml-1">min</span></h2>
+                <h2 id="saldo-display" class="text-4xl font-light text-white">
+                    -- <span class="text-lg text-slate-500 ml-1">min</span>
+                </h2>
+                <div class="mt-4 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-cyan-500 h-full w-full opacity-50"></div>
+                </div>
             </div>
 
             <div class="glass p-6 rounded-2xl md:col-span-2">
                 <h3 class="text-lg font-medium mb-4">Nova Reunião Inteligente</h3>
-                <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none text-slate-300">
-                    <option>Carregando nichos...</option>
-                </select>
-                <button class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all uppercase text-sm tracking-widest">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-2 uppercase tracking-tighter">Nicho do Especialista</label>
+                        <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-cyan-500 text-slate-300">
+                            <option>Carregando nichos...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-2 uppercase tracking-tighter">Tradução para</label>
+                        <select class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-cyan-500 text-slate-300">
+                            <option>Inglês (EUA)</option>
+                            <option>Espanhol</option>
+                            <option>Alemão</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all neon-border uppercase text-sm tracking-widest">
                     Iniciar Sala Agora
                 </button>
             </div>
+
         </main>
+
+        <footer class="mt-auto text-center text-slate-600 text-[10px] tracking-[0.2em] uppercase">
+            POWERED BY PIPECAT CLOUD & SUPABASE
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
+        // Configurações do seu projeto
         const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
         
-        // Forma correta de inicializar no navegador
+        // Inicializa o cliente usando a variável global 'supabase' carregada pelo CDN
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        async function init() {
+        async function initDashboard() {
+            console.log("Conectando ao OmniTalk Backend...");
+
             try {
-                // Busca saldo na tabela 'perfis'
-                const { data: perfis, error: pError } = await _supabase
-                    .from('perfis')
-                    .select('saldo_minuto')
+                // 1. BUSCAR SALDO NA TABELA 'profiles'
+                const { data: profiles, error: pError } = await _supabase
+                    .from('profiles')
+                    .select('minute_balance')
                     .limit(1);
 
-                if (perfis && perfis.length > 0) {
-                    document.getElementById('saldo-display').innerHTML = `${perfis[0].saldo_minuto}<span class="text-lg text-slate-500 ml-1">min</span>`;
+                if (pError) throw pError;
+
+                if (profiles && profiles.length > 0) {
+                    const saldo = profiles[0].minute_balance;
+                    document.getElementById('saldo-display').innerHTML = `${saldo}<span class="text-lg text-slate-500 ml-1">min</span>`;
+                    console.log("Saldo carregado com sucesso!");
                 }
 
-                // Busca nichos na tabela 'ai_presets'
-                const { data: presets } = await _supabase.from('ai_presets').select('nicho');
-                if (presets) {
-                    const select = document.getElementById('select-nicho');
-                    select.innerHTML = presets.map(n => `<option>${n.nicho}</option>`).join('');
+                // 2. BUSCAR NICHOS NA TABELA 'ai_presets'
+                const { data: presets, error: nError } = await _supabase
+                    .from('ai_presets')
+                    .select('nicho');
+
+                if (nError) throw nError;
+
+                if (presets && presets.length > 0) {
+                    const selectNicho = document.getElementById('select-nicho');
+                    selectNicho.innerHTML = presets.map(p => `<option value="${p.nicho}">${p.nicho}</option>`).join('');
+                    console.log("Nichos carregados!");
                 }
-            } catch (e) {
-                console.error(e);
+
+            } catch (err) {
+                console.error("Erro crítico:", err.message);
+                document.getElementById('saldo-display').innerHTML = `<span class="text-red-500 text-sm">Erro de Conexão</span>`;
             }
         }
-        window.onload = init;
+
+        window.onload = initDashboard;
     </script>
 </body>
 </html>
