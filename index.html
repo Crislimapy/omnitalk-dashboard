@@ -20,7 +20,8 @@
         <header class="flex justify-between items-center mb-12">
             <h1 class="text-2xl font-bold tracking-tighter metallic-text uppercase">OMNITALK</h1>
             <div class="flex items-center gap-4">
-                <span class="text-sm text-slate-400">Cristian Lima</span>
+                <span id="user-name" class="text-sm text-slate-400">Carregando...</span>
+                <button onclick="signOut()" class="text-[10px] text-slate-600 hover:text-red-400 uppercase tracking-widest transition-all">Sair</button>
                 <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 border border-slate-600"></div>
             </div>
         </header>
@@ -98,7 +99,23 @@
             document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
         }
 
-        // Função Principal para Iniciar a Sala (Segura)
+        async function signOut() {
+            await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // --- TRAVA DE SEGURANÇA B2B ---
+        async function checkUser() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            document.getElementById('user-name').innerText = session.user.email.split('@')[0];
+            return session.user;
+        }
+
+        // Função Principal para Iniciar a Sala
         btnIniciar.onclick = async () => {
             const nicho = document.getElementById('select-nicho').value;
             const idioma = document.getElementById('select-idioma').value;
@@ -107,20 +124,17 @@
             btnIniciar.innerText = "Configurando IA...";
 
             try {
-                // Chama a Edge Function que você fez o deploy no Supabase
                 const { data, error } = await _supabase.functions.invoke('start-session', {
                     body: { nicho, idioma }
                 });
 
                 if (error) throw error;
 
-                // Redireciona para a sala de tradução
                 if (data && data.url) {
                     window.location.href = data.url;
                 } else {
-                    alert("Não foi possível gerar a sala. Verifique os créditos das APIs.");
+                    alert("Não foi possível gerar a sala. Verifique os créditos.");
                 }
-
             } catch (err) {
                 console.error("Erro ao iniciar sessão:", err);
                 alert("Falha técnica: Verifique se os créditos da OpenAI/Pipecat estão ativos.");
@@ -130,19 +144,30 @@
             }
         };
 
-        // Inicialização de Dados
+        // Inicialização de Dados com Filtro de Usuário
         async function init() {
+            const user = await checkUser();
+            if (!user) return;
+
             try {
-                const { data: profile } = await _supabase.from('profiles').select('minute_balance').limit(1).single();
+                // 1. Carrega saldo específico do usuário logado
+                const { data: profile } = await _supabase
+                    .from('profiles')
+                    .select('minute_balance')
+                    .eq('id', user.id)
+                    .single();
+
                 if (profile) {
                     document.getElementById('saldo-display').innerHTML = `${profile.minute_balance}<span class="text-lg text-slate-500 ml-1">min</span>`;
                 }
 
+                // 2. Carrega Nichos
                 const { data: presets } = await _supabase.from('ai_presets').select('nicho');
                 if (presets) {
                     document.getElementById('select-nicho').innerHTML = presets.map(p => `<option value="${p.nicho}">${p.nicho}</option>`).join('');
                 }
 
+                // 3. Carrega Planos
                 const { data: plans } = await _supabase.from('subscription_plans').select('*').eq('is_active', true);
                 if (plans) {
                     document.getElementById('plans-container').innerHTML = plans.map(plan => `
