@@ -55,7 +55,7 @@
                     </div>
                 </div>
 
-                <button class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all neon-border uppercase text-sm tracking-widest">
+                <button id="btn-iniciar" class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all neon-border uppercase text-sm tracking-widest">
                     Iniciar Sala Agora
                 </button>
             </div>
@@ -63,57 +63,86 @@
         </main>
 
         <footer class="mt-auto text-center text-slate-600 text-[10px] tracking-[0.2em] uppercase">
-            POWERED BY PIPECAT CLOUD & SUPABASE
+            POWERED BY PIPECAT CLOUD & SUPABASE | v1.0
         </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // Configurações do seu projeto
+        // --- CONFIGURAÇÕES ---
         const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
+        const pipecatKey = 'pk_a6801cd8-353c-4ae2-b82e-4034b481f10b';
         
-        // Inicializa o cliente usando a variável global 'supabase' carregada pelo CDN
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+        // --- FUNÇÃO DE INICIALIZAÇÃO (CARREGAR DADOS) ---
         async function initDashboard() {
-            console.log("Conectando ao OmniTalk Backend...");
-
             try {
-                // 1. BUSCAR SALDO NA TABELA 'profiles'
+                // 1. Buscar Saldo
                 const { data: profiles, error: pError } = await _supabase
                     .from('profiles')
                     .select('minute_balance')
                     .limit(1);
 
-                if (pError) throw pError;
-
                 if (profiles && profiles.length > 0) {
-                    const saldo = profiles[0].minute_balance;
-                    document.getElementById('saldo-display').innerHTML = `${saldo}<span class="text-lg text-slate-500 ml-1">min</span>`;
-                    console.log("Saldo carregado com sucesso!");
+                    document.getElementById('saldo-display').innerHTML = `${profiles[0].minute_balance}<span class="text-lg text-slate-500 ml-1">min</span>`;
                 }
 
-                // 2. BUSCAR NICHOS NA TABELA 'ai_presets'
-                const { data: presets, error: nError } = await _supabase
-                    .from('ai_presets')
-                    .select('nicho');
-
-                if (nError) throw nError;
-
+                // 2. Buscar Nichos
+                const { data: presets } = await _supabase.from('ai_presets').select('nicho');
                 if (presets && presets.length > 0) {
                     const selectNicho = document.getElementById('select-nicho');
                     selectNicho.innerHTML = presets.map(p => `<option value="${p.nicho}">${p.nicho}</option>`).join('');
-                    console.log("Nichos carregados!");
                 }
-
             } catch (err) {
-                console.error("Erro crítico:", err.message);
-                document.getElementById('saldo-display').innerHTML = `<span class="text-red-500 text-sm">Erro de Conexão</span>`;
+                console.error("Erro ao carregar banco:", err.message);
             }
         }
 
+        // --- FUNÇÃO PARA CRIAR SALA NA PIPECAT ---
+        document.getElementById('btn-iniciar').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-iniciar');
+            const originalText = btn.innerText;
+            
+            btn.innerText = "Criando Sala...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('https://api.pipecat.cloud/v1/rooms', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${pipecatKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: `omnitalk-${Math.random().toString(36).substring(7)}`,
+                        properties: {
+                            enable_chat: true,
+                            start_video_off: false,
+                            enable_prejoin_page: true
+                        }
+                    })
+                });
+
+                const room = await response.json();
+                
+                if (room.url) {
+                    window.open(room.url, '_blank');
+                } else {
+                    alert("Erro da Pipecat: " + (room.error || "Não foi possível criar a sala"));
+                }
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+                alert("Falha na conexão com a Pipecat Cloud.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Rodar ao iniciar a página
         window.onload = initDashboard;
     </script>
 </body>
