@@ -18,7 +18,7 @@
         <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-12 font-medium">B2B Translation Platform</p>
         
         <div class="space-y-6">
-            <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all text-xs uppercase tracking-widest neon-border">
+            <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all text-[10px] uppercase tracking-[0.2em] neon-border">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
                 Continuar com Google
             </button>
@@ -38,23 +38,32 @@
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function loginGoogle() {
-            try {
-                const { error } = await _supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: { redirectTo: window.location.origin + '/index.html' }
-                });
-                if (error) throw error;
-            } catch (err) {
+            await _supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { 
+                    redirectTo: window.location.origin + '/index.html',
+                    queryParams: { access_type: 'offline', prompt: 'select_account' }
+                }
+            });
+        }
+
+        // --- ESTA É A PARTE QUE CORRIGE O PROBLEMA ---
+        function verificarErrosNaURL() {
+            // O Supabase devolve o erro de "signup disabled" na URL após o redirecionamento
+            const hash = window.location.hash;
+            const params = new URLSearchParams(window.location.search);
+            
+            // Verifica se existe erro no link ou no hash da URL
+            if (hash.includes("error=access_denied") || 
+                hash.includes("error_description=Signups+not+allowed") ||
+                params.get('error') === 'access_denied') {
+                
                 window.location.href = 'acesso-negado.html';
             }
         }
 
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('error') || window.location.hash.includes("error")) {
-                window.location.href = 'acesso-negado.html';
-            }
-        }
+        // Executa a verificação assim que a página carrega
+        window.onload = verificarErrosNaURL;
     </script>
 </body>
 </html>
