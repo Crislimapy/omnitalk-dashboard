@@ -3,31 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniTalk | Login</title>
+    <title>OmniTalk | B2B Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f1115; color: #e2e8f0; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
-    <div class="glass max-w-sm w-full p-10 rounded-3xl text-center border border-white/10">
-        <h1 class="text-3xl font-bold metallic-text uppercase mb-8">OMNITALK</h1>
-        <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
-            Continuar com Google
-        </button>
+    <div class="glass max-w-sm w-full p-10 rounded-3xl text-center border border-white/10 shadow-2xl">
+        <h1 class="text-3xl font-bold tracking-tighter metallic-text uppercase mb-2">OMNITALK</h1>
+        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-12 font-medium">B2B Translation Platform</p>
+        
+        <div class="space-y-6">
+            <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all text-[10px] uppercase tracking-[0.2em] neon-border">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
+                Continuar com Google
+            </button>
+            
+            <div class="pt-6 border-t border-white/5">
+                <p class="text-[9px] text-slate-600 uppercase tracking-widest leading-relaxed">
+                    Acesso restrito a usuários autorizados.<br>Ambiente criptografado.
+                </p>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const _supabase = supabase.createClient('https://iozbujgwbqcdecncytvq.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o');
+        const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function loginGoogle() {
             await _supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: { redirectTo: window.location.origin + '/index.html' }
+                options: { 
+                    redirectTo: window.location.origin + '/index.html',
+                    queryParams: { prompt: 'select_account' }
+                }
             });
         }
     </script>
