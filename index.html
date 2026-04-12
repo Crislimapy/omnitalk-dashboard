@@ -55,20 +55,19 @@
                     <div>
                         <label class="text-xs text-slate-500 block mb-2 uppercase tracking-tighter">Nicho do Especialista</label>
                         <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-cyan-500 text-slate-300">
-                            <option value="">Carregando nichos...</option>
+                            <option>Carregando...</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-xs text-slate-500 block mb-2 uppercase tracking-tighter">Tradução para</label>
                         <select id="select-idioma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-cyan-500 text-slate-300">
-                            <option value="Inglês">Inglês (EUA)</option>
-                            <option value="Espanhol">Espanhol</option>
-                            <option value="Mandarim">Mandarim (China)</option>
-                            <option value="Francês">Francês</option>
-                            <option value="Italiano">Italiano</option>
-                            <option value="Alemão">Alemão</option>
-                            <option value="Japonês">Japonês</option>
-                            <option value="Português">Português (Brasil)</option>
+                            <option value="en">Inglês (EUA)</option>
+                            <option value="es">Espanhol</option>
+                            <option value="zh">Mandarim (China)</option>
+                            <option value="fr">Francês</option>
+                            <option value="it">Italiano</option>
+                            <option value="de">Alemão</option>
+                            <option value="ja">Japonês</option>
                         </select>
                     </div>
                 </div>
@@ -94,68 +93,119 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
+    
+    // Inicialização do cliente
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        const btnIniciar = document.getElementById('btn-iniciar');
+    const btnIniciar = document.getElementById('btn-iniciar');
 
-        function toggleModal(show) {
-            document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
+    function toggleModal(show) {
+        document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
+    }
+
+    async function signOut() {
+        await _supabase.auth.signOut();
+        window.location.href = 'login.html';
+    }
+
+    async function checkUser() {
+        const hash = window.location.hash;
+        if (hash.includes("error=access_denied") || hash.includes("Signups+not+allowed")) {
+            window.location.href = 'acesso-negado.html';
+            return null;
         }
 
-        async function signOut() {
-            await _supabase.auth.signOut();
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
             window.location.href = 'login.html';
+            return null;
         }
 
-        async function checkUser() {
-            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
-            
-            if (sessionError || !session) {
-                window.location.href = 'login.html';
-                return null;
+        const user = session.user;
+        const metadata = user.user_metadata;
+        document.getElementById('user-name').innerText = metadata.full_name || user.email.split('@')[0];
+        if (metadata.avatar_url) document.getElementById('user-avatar').src = metadata.avatar_url;
+
+        return user;
+    }
+
+    btnIniciar.onclick = async () => {
+        const nicho = document.getElementById('select-nicho').value;
+        const idioma = document.getElementById('select-idioma').value;
+        
+        btnIniciar.disabled = true;
+        btnIniciar.innerText = "Configurando IA...";
+
+        try {
+            // Chamada explícita para a função que você deu deploy
+            const { data, error } = await _supabase.functions.invoke('start-session', {
+                body: { nicho: nicho, idioma: idioma }
+            });
+
+            // Se o seu Trigger de saldo disparar, o erro virá aqui
+            if (error) {
+                const errorMsg = await error.context.json();
+                throw new Error(errorMsg.error || "Erro ao processar saldo.");
             }
 
-            const user = session.user;
-            const metadata = user.user_metadata;
-            document.getElementById('user-name').innerText = metadata.full_name || user.email.split('@')[0];
-            if (metadata.avatar_url) document.getElementById('user-avatar').src = metadata.avatar_url;
+            // Redireciona para a sala da Daily gerada pela Pipecat
+            if (data && data.url) {
+                window.location.href = data.url;
+            } else {
+                alert("Erro: A Pipecat não retornou uma URL válida.");
+            }
 
-            return user;
+        } catch (err) {
+            console.error("Erro OmniTalk:", err);
+            // Aqui ele exibirá a mensagem "Saldo insuficiente" vinda do banco
+            alert(err.message || "Falha técnica: Verifique sua conexão ou créditos.");
+        } finally {
+            btnIniciar.disabled = false;
+            btnIniciar.innerText = "Iniciar Sala Agora";
         }
+    };
 
-        btnIniciar.onclick = async () => {
-            const nicho = document.getElementById('select-nicho').value;
-            const idioma = document.getElementById('select-idioma').value;
-            
-            if (!nicho) {
-                alert("Por favor, selecione um nicho antes de iniciar.");
-                return;
+    async function init() {
+        const user = await checkUser();
+        if (!user) return;
+
+        try {
+            // Carregar Saldo
+            const { data: profile } = await _supabase.from('profiles').select('minute_balance').eq('id', user.id).single();
+            if (profile) {
+                document.getElementById('saldo-display').innerHTML = `${profile.minute_balance}<span class="text-lg text-slate-500 ml-1">min</span>`;
             }
 
-            btnIniciar.disabled = true;
-            btnIniciar.innerText = "Configurando IA...";
+            // Carregar Nichos
+            const { data: presets } = await _supabase.from('ai_presets').select('nicho');
+            if (presets && presets.length > 0) {
+                document.getElementById('select-nicho').innerHTML = presets.map(p => `<option value="${p.nicho}">${p.nicho}</option>`).join('');
+            } else {
+                document.getElementById('select-nicho').innerHTML = '<option value="Geral">Geral</option>';
+            }
 
-            try {
-                // Invocação da Edge Function
-                const { data, error } = await _supabase.functions.invoke('start-session', {
-                    body: { nicho: nicho, idioma: idioma }
-                });
+            // Carregar Planos
+            const { data: plans } = await _supabase.from('subscription_plans').select('*').eq('is_active', true);
+            if (plans) {
+                document.getElementById('plans-container').innerHTML = plans.map(plan => `
+                    <div class="glass p-4 rounded-xl border border-slate-800 plan-card cursor-pointer">
+                        <p class="text-[10px] text-cyan-400 uppercase font-bold mb-1">${plan.name}</p>
+                        <h4 class="text-2xl font-light">${plan.minutes_allowance}min</h4>
+                        <p class="text-slate-500 text-xs mt-4">R$ ${plan.price_brl}</p>
+                        <button class="w-full mt-4 py-2 bg-slate-800 text-[10px] rounded uppercase hover:bg-white hover:text-black transition-all">Comprar</button>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error("Erro na carga inicial:", error);
+        }
+    }
 
-                if (error) {
-                    // Tenta extrair a mensagem de erro do banco de dados (ex: Saldo Insuficiente)
-                    let errorDetails;
-                    try {
-                        errorDetails = await error.context.json();
-                    } catch (e) {
-                        errorDetails = { error: error.message };
-                    }
-                    throw new Error(errorDetails.error || "Erro ao iniciar sessão.");
-                }
-
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error("A API não retornou uma URL válida. Ver
+    window.onload = init;
+</script>
+</body>
+</html>
