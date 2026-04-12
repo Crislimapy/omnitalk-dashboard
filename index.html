@@ -11,6 +11,7 @@
         .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); }
         .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         #modal-plans { display: none; }
+        .plan-card:hover { border-color: rgba(0, 255, 255, 0.5); transform: translateY(-5px); transition: all 0.3s ease; }
     </style>
 </head>
 <body class="antialiased font-sans">
@@ -23,132 +24,57 @@
                     <span id="user-name" class="text-sm font-semibold text-white block">Acessando...</span>
                     <button onclick="signOut()" class="text-[10px] text-slate-600 hover:text-red-400 uppercase tracking-widest transition-all">Sair</button>
                 </div>
-                <div class="p-[2px] bg-slate-700 rounded-full">
-                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full border border-slate-900">
+                <div class="p-[2px] bg-slate-700 rounded-full shadow-lg">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full border border-slate-900 object-cover">
                 </div>
             </div>
         </header>
 
         <main class="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass p-6 rounded-2xl md:col-span-1">
-                <p class="text-xs uppercase tracking-widest text-slate-500 mb-2">Saldo</p>
-                <h2 id="saldo-display" class="text-4xl font-light text-white">-- min</h2>
-                <button onclick="toggleModal(true)" class="mt-6 w-full text-[10px] text-cyan-400 border border-cyan-500/30 py-2 rounded-lg uppercase">Adquirir Créditos</button>
+            <div class="glass p-6 rounded-2xl md:col-span-1 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs uppercase tracking-widest text-slate-500 mb-2">Créditos Disponíveis</p>
+                    <h2 id="saldo-display" class="text-4xl font-light text-white">-- min</h2>
+                </div>
+                <button onclick="toggleModal(true)" class="mt-6 w-full text-[10px] text-cyan-400 border border-cyan-500/30 py-2 rounded-lg hover:bg-cyan-500/10 transition-all uppercase tracking-widest">
+                    Adquirir Créditos
+                </button>
             </div>
 
             <div class="glass p-6 rounded-2xl md:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Nova Reunião Inteligente</h3>
+                    <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded border border-cyan-500/20 uppercase tracking-widest">Privacidade Ativa</span>
+                </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="text-xs text-slate-500 block mb-2 uppercase">Especialista</label>
-                        <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300">
-                            <option value="">Carregando...</option>
+                        <label class="text-xs text-slate-500 block mb-2 uppercase tracking-tighter">Nicho do Especialista</label>
+                        <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-cyan-500 text-slate-300">
+                            <option value="">Carregando nichos...</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500 block mb-2 uppercase">Idioma</label>
-                        <select id="select-idioma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300">
-                            <option value="Inglês">Inglês</option>
+                        <label class="text-xs text-slate-500 block mb-2 uppercase tracking-tighter">Tradução para</label>
+                        <select id="select-idioma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-cyan-500 text-slate-300">
+                            <option value="Inglês">Inglês (EUA)</option>
                             <option value="Espanhol">Espanhol</option>
-                            <option value="Português">Português</option>
+                            <option value="Português">Português (Brasil)</option>
+                            <option value="Mandarim">Mandarim</option>
+                            <option value="Francês">Francês</option>
+                            <option value="Italiano">Italiano</option>
                         </select>
                     </div>
                 </div>
-                <button id="btn-iniciar" class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 uppercase text-sm tracking-widest">
+
+                <button id="btn-iniciar" class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all neon-border uppercase text-sm tracking-widest">
                     Iniciar Sala Agora
                 </button>
             </div>
         </main>
 
-        <div id="modal-plans" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div id="modal-plans" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div class="glass max-w-2xl w-full p-8 rounded-3xl relative">
-                <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-slate-500">✕</button>
-                <div id="plans-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <script>
-        // Variáveis globais
-        let _supabase;
-        const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
-
-        async function signOut() {
-            await _supabase.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
-        function toggleModal(show) {
-            document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
-        }
-
-        async function init() {
-            // Garantir que a biblioteca Supabase carregou
-            if (typeof supabase === 'undefined') {
-                console.error("Erro: Biblioteca Supabase não carregou!");
-                return;
-            }
-
-            _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-            
-            const { data: { session } } = await _supabase.auth.getSession();
-            
-            if (!session) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            const user = session.user;
-            document.getElementById('user-name').innerText = user.user_metadata.full_name || user.email;
-            if (user.user_metadata.avatar_url) document.getElementById('user-avatar').src = user.user_metadata.avatar_url;
-
-            try {
-                const { data: profile } = await _supabase.from('profiles').select('minute_balance').eq('id', user.id).single();
-                if (profile) document.getElementById('saldo-display').innerText = `${profile.minute_balance} min`;
-
-                const { data: presets } = await _supabase.from('ai_presets').select('nicho');
-                const nichoSelect = document.getElementById('select-nicho');
-                if (presets && presets.length > 0) {
-                    nichoSelect.innerHTML = presets.map(p => `<option value="${p.nicho}">${p.nicho}</option>`).join('');
-                } else {
-                    nichoSelect.innerHTML = '<option value="Geral">Geral</option>';
-                }
-            } catch (err) {
-                console.error("Erro ao carregar dados:", err);
-            }
-        }
-
-        document.getElementById('btn-iniciar').onclick = async () => {
-            const btn = document.getElementById('btn-iniciar');
-            const nicho = document.getElementById('select-nicho').value;
-            const idioma = document.getElementById('select-idioma').value;
-
-            btn.disabled = true;
-            btn.innerText = "Carregando...";
-
-            try {
-                // Tenta invocar a função start-session
-                const { data, error } = await _supabase.functions.invoke('start-session', {
-                    body: { nicho, idioma }
-                });
-
-                if (error) throw error;
-                if (data?.url) window.location.href = data.url;
-                else alert("Erro: Sala não gerada. Verifique os segredos da Pipecat.");
-
-            } catch (err) {
-                console.error("Erro no clique:", err);
-                alert("Erro ao iniciar: " + (err.message || "Falha na função start-session"));
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Iniciar Sala Agora";
-            }
-        };
-
-        // Roda o init apenas quando a página estiver totalmente pronta
-        window.addEventListener('load', init);
-    </script>
-</body>
-</html>
+                <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+                <h3 class="text-2xl font-bold metallic-text mb-2 text-center uppercase tracking-tighter">Planos OmniTalk</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" id="plans-container"></div>
