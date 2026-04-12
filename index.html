@@ -6,20 +6,20 @@
     <title>OmniTalk | B2B Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f1115; color: #e2e8f0; }
+        body { background-color: #0f1115; color: #e2e8f0; font-family: sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         #modal-plans { display: none; }
     </style>
 </head>
-<body class="antialiased font-sans">
+<body class="antialiased">
 
     <div class="min-h-screen flex flex-col p-6 lg:p-12">
         <header class="flex justify-between items-center mb-12">
             <h1 class="text-2xl font-bold tracking-tighter metallic-text uppercase">OMNITALK</h1>
             <div class="flex items-center gap-4">
                 <div class="text-right">
-                    <span id="user-name" class="text-sm font-semibold text-white block">Acessando...</span>
+                    <span id="user-name" class="text-sm font-semibold text-white block">Sessão Ativa</span>
                     <button onclick="signOut()" class="text-[10px] text-slate-600 hover:text-red-400 uppercase tracking-widest transition-all">Sair</button>
                 </div>
                 <div class="p-[2px] bg-slate-700 rounded-full shadow-lg">
@@ -34,51 +34,56 @@
                     <p class="text-xs uppercase tracking-widest text-slate-500 mb-2">Créditos</p>
                     <h2 id="saldo-display" class="text-4xl font-light text-white">-- min</h2>
                 </div>
-                <button onclick="toggleModal(true)" class="mt-6 w-full text-[10px] text-cyan-400 border border-cyan-500/30 py-2 rounded-lg uppercase tracking-widest">Adquirir Créditos</button>
+                <button onclick="toggleModal(true)" class="mt-6 w-full text-[10px] text-cyan-400 border border-cyan-500/30 py-2 rounded-lg uppercase tracking-widest hover:bg-cyan-500/10 transition-all">
+                    Planos
+                </button>
             </div>
 
             <div class="glass p-6 rounded-2xl md:col-span-2">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="text-xs text-slate-500 block mb-2 uppercase">Especialista</label>
-                        <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300">
+                        <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 outline-none focus:border-cyan-500">
                             <option value="">Carregando...</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-xs text-slate-500 block mb-2 uppercase">Idioma</label>
-                        <select id="select-idioma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300">
+                        <select id="select-idioma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 outline-none focus:border-cyan-500">
                             <option value="Inglês">Inglês</option>
                             <option value="Espanhol">Espanhol</option>
                             <option value="Português">Português</option>
                         </select>
                     </div>
                 </div>
-                <button id="btn-iniciar" class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all uppercase text-sm tracking-widest">Iniciar Sala Agora</button>
+                <button id="btn-iniciar" class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all uppercase text-sm tracking-widest shadow-lg shadow-cyan-500/10">
+                    Iniciar Sala Agora
+                </button>
             </div>
         </main>
 
         <div id="modal-plans" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div class="glass max-w-2xl w-full p-8 rounded-3xl relative">
-                <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-slate-500">✕</button>
+                <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
                 <div id="plans-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"></div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script>
         const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
         let _supabase;
 
+        function toggleModal(show) {
+            document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
+        }
+
         async function signOut() {
             await _supabase.auth.signOut();
             window.location.href = 'login.html';
-        }
-
-        function toggleModal(show) {
-            document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
         }
 
         async function init() {
@@ -88,10 +93,12 @@
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) { window.location.href = 'login.html'; return; }
 
-            document.getElementById('user-name').innerText = session.user.user_metadata.full_name || session.user.email;
-            
+            const user = session.user;
+            document.getElementById('user-name').innerText = user.user_metadata.full_name || user.email;
+            if (user.user_metadata.avatar_url) document.getElementById('user-avatar').src = user.user_metadata.avatar_url;
+
             try {
-                const { data: profile } = await _supabase.from('profiles').select('minute_balance').eq('id', session.user.id).single();
+                const { data: profile } = await _supabase.from('profiles').select('minute_balance').eq('id', user.id).single();
                 if (profile) document.getElementById('saldo-display').innerText = `${profile.minute_balance} min`;
 
                 const { data: presets } = await _supabase.from('ai_presets').select('nicho');
@@ -105,28 +112,27 @@
             const idioma = document.getElementById('select-idioma').value;
 
             btn.disabled = true;
-            btn.innerText = "Autorizando...";
+            btn.innerText = "CONECTANDO...";
 
             try {
                 const { data: { session } } = await _supabase.auth.getSession();
                 
-                // Chamada para a função
                 const { data, error } = await _supabase.functions.invoke('start-session', {
                     body: { nicho, idioma },
                     headers: { Authorization: `Bearer ${session.access_token}` }
                 });
 
-                if (error) {
-                    // Se o erro for 401, o problema está na chave da Pipecat ou no Token
-                    console.error("Erro detalhado da Função:", error);
-                    throw new Error("Erro de autorização ou saldo. Verifique os logs do Supabase.");
+                if (error) throw error;
+
+                if (data?.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error("Resposta inválida da API.");
                 }
 
-                if (data?.url) window.location.href = data.url;
-                else throw new Error("Pipecat não retornou URL.");
-
             } catch (err) {
-                alert(err.message);
+                console.error(err);
+                alert("Erro ao iniciar: " + (err.message || "Verifique se o Docker está rodando e se a função foi enviada."));
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Iniciar Sala Agora";
