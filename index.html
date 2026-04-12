@@ -68,10 +68,12 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script>
+        // Variáveis globais
+        let _supabase;
         const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function signOut() {
             await _supabase.auth.signOut();
@@ -83,26 +85,29 @@
         }
 
         async function init() {
-            console.log("Iniciando dashboard...");
+            // Garantir que a biblioteca Supabase carregou
+            if (typeof supabase === 'undefined') {
+                console.error("Erro: Biblioteca Supabase não carregou!");
+                return;
+            }
+
+            _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+            
             const { data: { session } } = await _supabase.auth.getSession();
             
             if (!session) {
-                console.log("Sem sessão, redirecionando...");
                 window.location.href = 'login.html';
                 return;
             }
 
             const user = session.user;
-            // Atualiza Nome e Avatar
             document.getElementById('user-name').innerText = user.user_metadata.full_name || user.email;
             if (user.user_metadata.avatar_url) document.getElementById('user-avatar').src = user.user_metadata.avatar_url;
 
             try {
-                // 1. Busca Saldo
                 const { data: profile } = await _supabase.from('profiles').select('minute_balance').eq('id', user.id).single();
                 if (profile) document.getElementById('saldo-display').innerText = `${profile.minute_balance} min`;
 
-                // 2. Busca Nichos
                 const { data: presets } = await _supabase.from('ai_presets').select('nicho');
                 const nichoSelect = document.getElementById('select-nicho');
                 if (presets && presets.length > 0) {
@@ -131,18 +136,19 @@
 
                 if (error) throw error;
                 if (data?.url) window.location.href = data.url;
-                else alert("Erro: Sala não gerada.");
+                else alert("Erro: Sala não gerada. Verifique os segredos da Pipecat.");
 
             } catch (err) {
                 console.error("Erro no clique:", err);
-                alert("Erro ao iniciar: " + (err.message || "Verifique a função start-session"));
+                alert("Erro ao iniciar: " + (err.message || "Falha na função start-session"));
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Iniciar Sala Agora";
             }
         };
 
-        window.onload = init;
+        // Roda o init apenas quando a página estiver totalmente pronta
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
