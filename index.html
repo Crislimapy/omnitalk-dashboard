@@ -5,118 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OmniTalk | B2B Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #0f1115; color: #e2e8f0; font-family: sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        #modal-plans { display: none; }
+        select option { background: #1a1d23; color: #fff; }
     </style>
 </head>
 <body class="antialiased">
 
     <div class="min-h-screen flex flex-col p-6 lg:p-12">
         <header class="flex justify-between items-center mb-12">
-            <h1 class="text-2xl font-bold tracking-tighter metallic-text uppercase">OMNITALK</h1>
+            <h1 class="text-2xl font-bold tracking-tighter metallic-text uppercase text-white">OMNITALK</h1>
             <div class="flex items-center gap-4">
-                <div class="text-right">
-                    <span id="user-name" class="text-sm font-semibold text-white block">Sessão Ativa</span>
-                    <button onclick="signOut()" class="text-[10px] text-slate-600 hover:text-red-400 uppercase tracking-widest transition-all">Sair</button>
-                </div>
-                <div class="p-[2px] bg-slate-700 rounded-full shadow-lg">
-                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full border border-slate-900 object-cover">
-                </div>
+                <span id="user-email" class="text-[10px] text-slate-500 uppercase tracking-widest hidden lg:block">Carregando...</span>
+                <button onclick="logout()" class="px-4 py-2 glass rounded-xl text-[10px] uppercase tracking-widest hover:bg-white/5 transition-all">Sair</button>
             </div>
         </header>
 
-        <main class="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass p-6 rounded-2xl md:col-span-1 flex flex-col justify-between">
-                <div>
-                    <p class="text-xs uppercase tracking-widest text-slate-500 mb-2">Créditos</p>
-                    <h2 id="saldo-display" class="text-4xl font-light text-white">-- min</h2>
-                </div>
-                <button onclick="toggleModal(true)" class="mt-6 w-full text-[10px] text-cyan-400 border border-cyan-500/30 py-2 rounded-lg uppercase tracking-widest hover:bg-cyan-500/10 transition-all">
-                    Planos
-                </button>
-            </div>
+        <main class="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full">
+            <div class="w-full glass p-8 lg:p-16 rounded-[3rem] border border-white/10 shadow-2xl text-center">
+                <h2 class="text-4xl lg:text-6xl font-bold metallic-text mb-6 uppercase tracking-tighter">Configurar Reunião</h2>
+                <p class="text-slate-400 mb-12 text-sm lg:text-base max-w-lg mx-auto">Selecione o nicho da conversa e o idioma alvo para ativar a tradução inteligente em tempo real.</p>
 
-            <div class="glass p-6 rounded-2xl md:col-span-2">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-slate-500 block mb-2 uppercase">Especialista</label>
-                        <select id="select-nicho" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 outline-none focus:border-cyan-500">
-                            <option value="">Carregando...</option>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 text-left">
+                    <div class="space-y-2">
+                        <label class="text-[10px] uppercase tracking-[0.2em] text-cyan-500 font-bold ml-4">Nicho da Chamada</label>
+                        <select id="select-nicho" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:outline-none focus:border-cyan-500 transition-all appearance-none cursor-pointer">
+                            <option value="Geral">Geral / Negócios</option>
+                            <option value="Médico">Saúde / Médico</option>
+                            <option value="Jurídico">Jurídico / Legal</option>
+                            <option value="Tecnologia">TI / Tecnologia</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="text-xs text-slate-500 block mb-2 uppercase">Idioma</label>
-                        <select id="select-idioma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 outline-none focus:border-cyan-500">
-                            <option value="Inglês">Inglês</option>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] uppercase tracking-[0.2em] text-cyan-500 font-bold ml-4">Idioma da Tradução</label>
+                        <select id="select-idioma" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:outline-none focus:border-cyan-500 transition-all appearance-none cursor-pointer">
+                            <option value="Português">Português (BR)</option>
+                            <option value="Inglês">Inglês (US)</option>
                             <option value="Espanhol">Espanhol</option>
-                            <option value="Português">Português</option>
                         </select>
                     </div>
                 </div>
-                <button id="btn-iniciar" class="w-full mt-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-cyan-400 transition-all uppercase text-sm tracking-widest shadow-lg shadow-cyan-500/10">
+
+                <button id="btn-iniciar" class="w-full py-6 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all text-xs uppercase tracking-[0.3em] shadow-xl shadow-white/5">
                     Iniciar Sala Agora
                 </button>
             </div>
         </main>
-
-        <div id="modal-plans" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div class="glass max-w-2xl w-full p-8 rounded-3xl relative">
-                <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-                <div id="plans-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"></div>
-            </div>
-        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script>
-        const supabaseUrl = 'https://iozbujgwbqcdecncytvq.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvemJ1amd3YnFjZGVjbmN5dHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzg2OTEsImV4cCI6MjA5MDk1NDY5MX0.pqfkL-xA6XJNSK7TxE_3s3B8eTe6FFpEzAbFtb3UH8o';
-        let _supabase;
+        // Configuração Supabase (Suas chaves fornecidas)
+        const supabaseUrl = 'https://dihkpsidfdaknvwhgypm.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaGtwc2lkZmRha252d2hneXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTMwMDIsImV4cCI6MjA5MTY2OTAwMn0.O9QwNC7E50OcVwAapzVVPSJ6AelJD4fV1uGB0S_ZOuo';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        function toggleModal(show) {
-            document.getElementById('modal-plans').style.display = show ? 'flex' : 'none';
+        // Verificação de Autenticação
+        async function checkAuth() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            document.getElementById('user-email').innerText = session.user.email;
         }
 
-        async function signOut() {
+        // Logout
+        async function logout() {
             await _supabase.auth.signOut();
             window.location.href = 'login.html';
         }
 
-        async function init() {
-            if (typeof supabase === 'undefined') return;
-            _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-            
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (!session) { window.location.href = 'login.html'; return; }
-
-            const user = session.user;
-            document.getElementById('user-name').innerText = user.user_metadata.full_name || user.email;
-            if (user.user_metadata.avatar_url) document.getElementById('user-avatar').src = user.user_metadata.avatar_url;
-
-            try {
-                const { data: profile } = await _supabase.from('profiles').select('minute_balance').eq('id', user.id).single();
-                if (profile) document.getElementById('saldo-display').innerText = `${profile.minute_balance} min`;
-
-                const { data: presets } = await _supabase.from('ai_presets').select('nicho');
-                if (presets) document.getElementById('select-nicho').innerHTML = presets.map(p => `<option value="${p.nicho}">${p.nicho}</option>`).join('');
-            } catch (err) { console.error(err); }
-        }
-
+        // Lógica de Início da Sala
         document.getElementById('btn-iniciar').onclick = async () => {
             const btn = document.getElementById('btn-iniciar');
             const nicho = document.getElementById('select-nicho').value;
             const idioma = document.getElementById('select-idioma').value;
 
             btn.disabled = true;
-            btn.innerText = "CONECTANDO...";
+            btn.innerText = "ESTABELECENDO CONEXÃO...";
 
             try {
                 const { data: { session } } = await _supabase.auth.getSession();
                 
+                // Chamamos sua Edge Function para validar a sessão
                 const { data, error } = await _supabase.functions.invoke('start-session', {
                     body: { nicho, idioma },
                     headers: { Authorization: `Bearer ${session.access_token}` }
@@ -124,22 +99,19 @@
 
                 if (error) throw error;
 
-                if (data?.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error("Resposta inválida da API.");
-                }
+                // Redireciona para room.html levando os parâmetros de tradução
+                // Mesmo que a API não retorne uma URL, nós forçamos para a nossa página de sala
+                window.location.href = `room.html?nicho=${encodeURIComponent(nicho)}&idioma=${encodeURIComponent(idioma)}`;
 
             } catch (err) {
                 console.error(err);
-                alert("Erro ao iniciar: " + (err.message || "Verifique se o Docker está rodando e se a função foi enviada."));
-            } finally {
+                alert("Erro ao iniciar sala. Verifique sua conexão.");
                 btn.disabled = false;
                 btn.innerText = "Iniciar Sala Agora";
             }
         };
 
-        window.onload = init;
+        window.onload = checkAuth;
     </script>
 </body>
 </html>
