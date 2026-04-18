@@ -1,85 +1,101 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OmniTalk Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniTalk Dashboard</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-body { background:#0f1115; color:#e2e8f0; }
-.glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); }
-</style>
+  <style>
+    body { background:#0f1115; color:#e2e8f0; font-family:sans-serif; }
+    .glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); }
+  </style>
 </head>
 
-<body class="p-6">
+<body class="p-6 flex items-center justify-center min-h-screen">
 
-<h1 class="text-2xl mb-6">OMNITALK</h1>
+  <div class="glass p-8 rounded-2xl w-full max-w-md text-center">
+    
+    <h1 class="text-2xl font-bold mb-6">OMNITALK</h1>
 
-<div class="glass p-6 rounded-2xl max-w-xl mx-auto">
+    <select id="nicho" class="w-full mb-4 p-3 rounded-lg bg-black/30 border border-white/10">
+      <option value="Geral">Geral / Negócios</option>
+      <option value="Médico">Saúde / Médico</option>
+      <option value="Jurídico">Jurídico / Legal</option>
+      <option value="Tecnologia">TI / Tecnologia</option>
+    </select>
 
-<select id="nicho" class="w-full mb-4 p-3 bg-black/30">
-<option value="Geral">Geral</option>
-<option value="Médico">Médico</option>
-<option value="Jurídico">Jurídico</option>
-<option value="Tecnologia">Tecnologia</option>
-</select>
+    <select id="idioma" class="w-full mb-6 p-3 rounded-lg bg-black/30 border border-white/10">
+      <option value="Português">Português (BR)</option>
+      <option value="Inglês">Inglês (US)</option>
+      <option value="Espanhol">Espanhol</option>
+    </select>
 
-<select id="idioma" class="w-full mb-4 p-3 bg-black/30">
-<option value="Português">Português</option>
-<option value="Inglês">Inglês</option>
-<option value="Espanhol">Espanhol</option>
-</select>
+    <button id="btnCriar"
+      class="w-full py-4 bg-white text-black font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition">
+      Iniciar Sala
+    </button>
 
-<button id="btn" class="w-full p-4 bg-white text-black rounded-xl">
-Iniciar Sala
-</button>
+    <p id="status" class="text-xs text-gray-400 mt-4"></p>
 
-</div>
+  </div>
 
 <script>
-const supabase = window.supabase.createClient(
-  "https://dihkpsidfdaknvwhgypm.supabase.co",
-  "SUA_PUBLIC_KEY_AQUI"
-);
+  // ✅ cria cliente (SEM conflito de variável)
+  const sb = window.supabase.createClient(
+    "https://dihkpsidfdaknvwhgypm.supabase.co",
+    "sb_publishable_TxahPXXnI_krxeCnyFDyBw_IP6GBE2N"
+  );
 
-// 🔐 Verifica login
-async function checkAuth(){
-  const { data } = await supabase.auth.getSession();
-  if(!data.session){
-    alert("Faça login primeiro");
-    return;
-  }
-}
+  // 🔐 verifica autenticação
+  async function checkAuth() {
+    const { data } = await sb.auth.getSession();
 
-// 🚀 Criar sala
-document.getElementById("btn").onclick = async () => {
-
-  const nicho = document.getElementById("nicho").value;
-  const idioma = document.getElementById("idioma").value;
-
-  const { data: sessionData } = await supabase.auth.getSession();
-
-  const { data, error } = await supabase.functions.invoke("create-room", {
-    body: { nicho, idioma },
-    headers: {
-      Authorization: `Bearer ${sessionData.session.access_token}`
+    if (!data.session) {
+      document.getElementById("status").innerText = "Você não está logado.";
+      document.getElementById("btnCriar").disabled = true;
+      return;
     }
-  });
 
-  if(error){
-    console.error(error);
-    alert("Erro ao criar sala");
-    return;
+    document.getElementById("status").innerText = "Logado como: " + data.session.user.email;
   }
 
-  // 🔥 Redireciona com ID REAL
-  window.location.href = `room.html?id=${data.room_id}`;
-};
+  // 🚀 criar sala
+  document.getElementById("btnCriar").onclick = async () => {
+    const btn = document.getElementById("btnCriar");
+    const status = document.getElementById("status");
 
-checkAuth();
+    const nicho = document.getElementById("nicho").value;
+    const idioma = document.getElementById("idioma").value;
+
+    btn.disabled = true;
+    status.innerText = "Criando sala...";
+
+    try {
+      const { data: sessionData } = await sb.auth.getSession();
+
+      const { data, error } = await sb.functions.invoke("create-room", {
+        body: { nicho, idioma },
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      // 🔥 redireciona corretamente
+      window.location.href = `room.html?id=${data.room_id}`;
+
+    } catch (err) {
+      console.error(err);
+      status.innerText = "Erro ao criar sala.";
+      btn.disabled = false;
+    }
+  };
+
+  checkAuth();
 </script>
 
 </body>
