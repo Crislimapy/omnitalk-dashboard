@@ -1,51 +1,56 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniTalk | B2B Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #0f1115; color: #e2e8f0; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniTalk | Login</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body { background:#0f1115; color:#e2e8f0; }
+    .glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); }
+  </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
-    <div class="glass max-w-sm w-full p-10 rounded-3xl text-center border border-white/10 shadow-2xl">
-        <h1 class="text-3xl font-bold tracking-tighter metallic-text uppercase mb-2">OMNITALK</h1>
-        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-12 font-medium">B2B Translation Platform</p>
-        
-        <div class="space-y-6">
-            <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all text-[10px] uppercase tracking-[0.2em] neon-border">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
-                Continuar com Google
-            </button>
-            
-            <div class="pt-6 border-t border-white/5">
-                <p class="text-[9px] text-slate-600 uppercase tracking-widest leading-relaxed">
-                    Acesso restrito a usuários autorizados.<br>Ambiente criptografado.
-                </p>
-            </div>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const supabaseUrl = 'https://dihkpsidfdaknvwhgypm.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaGtwc2lkZmRha252d2hneXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTMwMDIsImV4cCI6MjA5MTY2OTAwMn0.O9QwNC7E50OcVwAapzVVPSJ6AelJD4fV1uGB0S_ZOuo';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+<body class="flex items-center justify-center min-h-screen">
 
-        async function loginGoogle() {
-            await _supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { 
-                    redirectTo: window.location.origin + '/index.html',
-                    queryParams: { prompt: 'select_account' }
-                }
-            });
-        }
-    </script>
+  <div class="glass p-10 rounded-2xl text-center w-full max-w-sm">
+    <h1 class="text-2xl font-bold mb-6">OMNITALK</h1>
+
+    <button onclick="loginGoogle()"
+      class="w-full py-4 bg-white text-black rounded-xl font-bold">
+      Entrar com Google
+    </button>
+
+    <p id="status" class="text-xs mt-4 text-gray-400"></p>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const sb = window.supabase.createClient(
+    "https://dihkpsidfdaknvwhgypm.supabase.co",
+    "sb_publishable_TxahPXXnI_krxeCnyFDyBw_IP6GBE2N"
+  );
+
+  async function loginGoogle() {
+    await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+  }
+
+  // 🔥 se já estiver logado, pula pro dashboard
+  window.onload = async () => {
+    const { data } = await sb.auth.getSession();
+
+    if (data.session) {
+      window.location.href = "index.html";
+    }
+  };
+</script>
+
 </body>
 </html>

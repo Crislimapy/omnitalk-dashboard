@@ -6,19 +6,27 @@
   <title>OmniTalk Dashboard</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { background:#0f1115; color:#e2e8f0; font-family:sans-serif; }
+    body { background:#0f1115; color:#e2e8f0; }
     .glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); }
   </style>
 </head>
 
-<body class="p-6 flex items-center justify-center min-h-screen">
+<body class="p-6 min-h-screen flex flex-col">
 
-  <div class="glass p-8 rounded-2xl w-full max-w-md text-center">
-    
-    <h1 class="text-2xl font-bold mb-6">OMNITALK</h1>
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-xl font-bold">OMNITALK</h1>
+
+    <button onclick="logout()"
+      class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm">
+      Sair
+    </button>
+  </div>
+
+  <!-- CARD -->
+  <div class="glass p-8 rounded-2xl max-w-md mx-auto w-full text-center">
 
     <select id="nicho" class="w-full mb-4 p-3 rounded-lg bg-black/30 border border-white/10">
       <option value="Geral">Geral / Negócios</option>
@@ -34,68 +42,85 @@
     </select>
 
     <button id="btnCriar"
-      class="w-full py-4 bg-white text-black font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition">
+      class="w-full py-4 bg-white text-black font-bold rounded-xl">
       Iniciar Sala
     </button>
 
-    <p id="status" class="text-xs text-gray-400 mt-4"></p>
+    <p id="status" class="text-xs mt-4 text-gray-400"></p>
 
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ✅ cria cliente (SEM conflito de variável)
   const sb = window.supabase.createClient(
     "https://dihkpsidfdaknvwhgypm.supabase.co",
     "sb_publishable_TxahPXXnI_krxeCnyFDyBw_IP6GBE2N"
   );
 
-  // 🔐 verifica autenticação
+  let currentSession = null;
+
+  // 🔐 verifica sessão
   async function checkAuth() {
     const { data } = await sb.auth.getSession();
 
     if (!data.session) {
-      document.getElementById("status").innerText = "Você não está logado.";
-      document.getElementById("btnCriar").disabled = true;
+      window.location.href = "login.html";
       return;
     }
 
-    document.getElementById("status").innerText = "Logado como: " + data.session.user.email;
+    currentSession = data.session;
+
+    document.getElementById("status").innerText =
+      "Logado: " + data.session.user.email;
   }
+
+  // 🔄 escuta sessão (IMPORTANTE pro Google login)
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session) {
+      currentSession = session;
+      console.log("Sessão ativa");
+    }
+  });
 
   // 🚀 criar sala
   document.getElementById("btnCriar").onclick = async () => {
-    const btn = document.getElementById("btnCriar");
     const status = document.getElementById("status");
+
+    if (!currentSession) {
+      status.innerText = "Sessão não encontrada...";
+      return;
+    }
 
     const nicho = document.getElementById("nicho").value;
     const idioma = document.getElementById("idioma").value;
 
-    btn.disabled = true;
     status.innerText = "Criando sala...";
 
     try {
-      const { data: sessionData } = await sb.auth.getSession();
-
       const { data, error } = await sb.functions.invoke("create-room", {
         body: { nicho, idioma },
         headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
+          Authorization: `Bearer ${currentSession.access_token}`
         }
       });
 
       if (error) throw error;
 
-      // 🔥 redireciona corretamente
       window.location.href = `room.html?id=${data.room_id}`;
 
     } catch (err) {
       console.error(err);
       status.innerText = "Erro ao criar sala.";
-      btn.disabled = false;
     }
   };
 
-  checkAuth();
+  // 🚪 logout
+  async function logout() {
+    await sb.auth.signOut();
+    window.location.href = "login.html";
+  }
+
+  window.onload = checkAuth;
 </script>
 
 </body>
