@@ -3,37 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OmniTalk Login</title>
+<title>OmniTalk</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="bg-[#0f1115] text-white flex items-center justify-center min-h-screen">
+<body class="bg-[#0f1115] text-white flex flex-col items-center justify-center min-h-screen">
 
-<div class="bg-white/5 p-10 rounded-2xl text-center">
-    <h1 class="text-3xl mb-6">OMNITALK</h1>
+<button onclick="logout()" class="absolute top-5 right-5 bg-red-500 px-4 py-2 rounded">
+Sair
+</button>
 
-    <button id="btnLogin" class="bg-white text-black px-6 py-3 rounded-xl">
-        Login com Google
-    </button>
+<div class="bg-white/5 p-10 rounded-2xl text-center w-80">
+
+<h1 class="text-2xl mb-6">OMNITALK</h1>
+
+<select id="nicho" class="w-full mb-4 p-3 bg-black rounded">
+<option>Geral / Negócios</option>
+<option>Médico</option>
+<option>Jurídico</option>
+<option>Tecnologia</option>
+</select>
+
+<select id="idioma" class="w-full mb-6 p-3 bg-black rounded">
+<option>Português (BR)</option>
+<option>Inglês (US)</option>
+<option>Espanhol</option>
+</select>
+
+<button onclick="criarSala()" class="bg-white text-black w-full py-3 rounded">
+Iniciar Sala
+</button>
+
+<p id="status" class="mt-4 text-sm text-red-400"></p>
+
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+
 const supabase = window.supabase.createClient(
   "https://dihkpsidfdaknvwhgypm.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaGtwc2lkZmRha252d2hneXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTMwMDIsImV4cCI6MjA5MTY2OTAwMn0.O9QwNC7E50OcVwAapzVVPSJ6AelJD4fV1uGB0S_ZOuo"
 );
 
-// 👇 evento correto (sem onclick inline)
-document.getElementById("btnLogin").addEventListener("click", async () => {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.origin + "/index.html"
-    }
-  });
-});
-</script>
+async function checkSession() {
+  const { data } = await supabase.auth.getSession();
 
+  if (!data.session) {
+    window.location.href = "/login.html";
+  }
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "/login.html";
+}
+
+async function criarSala() {
+  const nicho = document.getElementById("nicho").value;
+  const idioma = document.getElementById("idioma").value;
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  console.log("SESSION:", session);
+
+  if (!session) {
+    document.getElementById("status").innerText = "Sessão inválida";
+    return;
+  }
+
+  const { data, error } = await supabase.functions.invoke("create-room", {
+    body: { nicho, idioma },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (error) {
+    console.error(error);
+    document.getElementById("status").innerText = "Erro ao criar sala";
+    return;
+  }
+
+  console.log("ROOM:", data);
+
+  window.location.href = `/room.html?id=${data.room_id}`;
+}
+
+checkSession();
+
+</script>
 </body>
 </html>
