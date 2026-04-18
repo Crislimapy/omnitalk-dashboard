@@ -1,39 +1,63 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OmniTalk Login</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniTalk | B2B Login</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ✅ IMPORTANTE: só um script do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { background-color: #0f1115; color: #e2e8f0; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .metallic-text { background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); }
+    </style>
 </head>
 
-<body class="bg-[#0f1115] text-white flex items-center justify-center min-h-screen">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-<div class="bg-white/5 p-10 rounded-2xl text-center">
-    <h1 class="text-3xl mb-6">OMNITALK</h1>
+    <div class="glass max-w-sm w-full p-10 rounded-3xl text-center border border-white/10 shadow-2xl">
+        <h1 class="text-3xl font-bold tracking-tighter metallic-text uppercase mb-2">OMNITALK</h1>
+        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-12 font-medium">
+            B2B Translation Platform
+        </p>
+        
+        <div class="space-y-6">
+            <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all text-[10px] uppercase tracking-[0.2em] neon-border">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
+                Continuar com Google
+            </button>
+            
+            <div class="pt-6 border-t border-white/5">
+                <p class="text-[9px] text-slate-600 uppercase tracking-widest leading-relaxed">
+                    Acesso restrito a usuários autorizados.<br>Ambiente criptografado.
+                </p>
+            </div>
+        </div>
+    </div>
 
-    <button onclick="login()" class="bg-white text-black px-6 py-3 rounded-xl">
-        Login com Google
-    </button>
-</div>
+    <script>
+        // ✅ GARANTE QUE NÃO EXISTE DUPLICAÇÃO
+        const supabaseClient = window.supabase.createClient(
+            "https://dihkpsidfdaknvwhgypm.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaGtwc2lkZmRha252d2hneXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTMwMDIsImV4cCI6MjA5MTY2OTAwMn0.O9QwNC7E50OcVwAapzVVPSJ6AelJD4fV1uGB0S_ZOuo"
+        );
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
+        async function loginGoogle() {
+            await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: { 
+                    redirectTo: window.location.origin + '/index.html',
+                    queryParams: { prompt: 'select_account' }
+                }
+            });
+        }
+    </script>
 
-const supabase = window.supabase.createClient(
-  "https://dihkpsidfdaknvwhgypm.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaGtwc2lkZmRha252d2hneXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTMwMDIsImV4cCI6MjA5MTY2OTAwMn0.O9QwNC7E50OcVwAapzVVPSJ6AelJD4fV1uGB0S_ZOuo"
-);
-
-async function login() {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.origin + "/index.html"
-    }
-  });
-}
-
-</script>
 </body>
 </html>
