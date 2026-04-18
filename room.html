@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OmniTalk Room</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body { background:#0f1115; color:#e2e8f0; }
+.glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); }
+</style>
+</head>
+
+<body class="p-6">
+
+<h1 class="text-xl mb-4">Sala OmniTalk</h1>
+
+<div class="glass p-6 rounded-2xl">
+
+<p><strong>ID:</strong> <span id="room-id"></span></p>
+<p><strong>Nicho:</strong> <span id="nicho"></span></p>
+<p><strong>Idioma:</strong> <span id="idioma"></span></p>
+<p><strong>Participantes:</strong> <span id="participants"></span></p>
+
+</div>
+
+<div class="mt-6">
+<button id="start-audio" class="p-4 bg-white text-black rounded-xl">
+Iniciar Microfone
+</button>
+</div>
+
+<div class="mt-6 glass p-4 rounded-xl">
+<h2>Transcrição ao vivo</h2>
+<div id="transcription"></div>
+</div>
+
+<script>
+const supabase = window.supabase.createClient(
+  "https://dihkpsidfdaknvwhgypm.supabase.co",
+  "SUA_PUBLIC_KEY_AQUI"
+);
+
+// 📍 pega ID da URL
+const params = new URLSearchParams(window.location.search);
+const roomId = params.get("id");
+
+document.getElementById("room-id").innerText = roomId;
+
+// 🔎 busca dados da sala
+async function loadRoom(){
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("*")
+    .eq("id", roomId)
+    .single();
+
+  if(error){
+    alert("Sala não encontrada");
+    return;
+  }
+
+  document.getElementById("nicho").innerText = data.nicho;
+  document.getElementById("idioma").innerText = data.idioma_padrao;
+  document.getElementById("participants").innerText = data.participants;
+}
+
+loadRoom();
+
+
+// 🎤 CAPTURA DE ÁUDIO (base)
+document.getElementById("start-audio").onclick = async () => {
+
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  const audioContext = new AudioContext();
+  const source = audioContext.createMediaStreamSource(stream);
+
+  const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+  source.connect(processor);
+  processor.connect(audioContext.destination);
+
+  processor.onaudioprocess = (e) => {
+    const data = e.inputBuffer.getChannelData(0);
+
+    // 🔥 aqui vai envio pro Deepgram depois
+    console.log("capturando áudio...");
+  };
+};
+
+</script>
+
+</body>
+</html>
