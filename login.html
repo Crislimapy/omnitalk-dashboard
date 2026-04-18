@@ -1,56 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmniTalk | Login</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    body { background:#0f1115; color:#e2e8f0; }
-    .glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OmniTalk Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="flex items-center justify-center min-h-screen">
+<body class="bg-[#0f1115] text-white flex items-center justify-center min-h-screen">
 
-  <div class="glass p-10 rounded-2xl text-center w-full max-w-sm">
-    <h1 class="text-2xl font-bold mb-6">OMNITALK</h1>
+<div class="bg-white/5 p-10 rounded-2xl text-center">
+    <h1 class="text-3xl mb-6">OMNITALK</h1>
 
-    <button onclick="loginGoogle()"
-      class="w-full py-4 bg-white text-black rounded-xl font-bold">
-      Entrar com Google
+    <button onclick="login()" class="bg-white text-black px-6 py-3 rounded-xl">
+        Login com Google
     </button>
-
-    <p id="status" class="text-xs mt-4 text-gray-400"></p>
-  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const sb = window.supabase.createClient(
-    "https://dihkpsidfdaknvwhgypm.supabase.co",
-    "sb_publishable_TxahPXXnI_krxeCnyFDyBw_IP6GBE2N"
-  );
 
-  async function loginGoogle() {
-    await sb.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-  }
+const supabase = window.supabase.createClient(
+  "https://dihkpsidfdaknvwhgypm.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaGtwc2lkZmRha252d2hneXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTMwMDIsImV4cCI6MjA5MTY2OTAwMn0.O9QwNC7E50OcVwAapzVVPSJ6AelJD4fV1uGB0S_ZOuo"
+);
 
-  // 🔥 se já estiver logado, pula pro dashboard
-  window.onload = async () => {
-    const { data } = await sb.auth.getSession();
-
-    if (data.session) {
-      window.location.href = "index.html";
+async function login() {
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin + "/index.html"
     }
-  };
-</script>
+  });
+}
 
+</script>
 </body>
 </html>
